@@ -195,4 +195,17 @@ for cluster_id, skills_list in clusters.items():
     label = cluster_labels.get(cluster_id, f"Cluster {cluster_id}")
 
     with st.expander(label):
-        st.write(", ".join(skills_list[:12]))
+        for skill in skills_list[:12]:
+            st.markdown(f"""
+            <span style="
+                display:inline-block;
+                background-color:#1f2937;
+                color:#e5e7eb;
+                padding:6px 12px;
+                margin:4px;
+                border-radius:20px;
+                font-size:13px;
+            ">
+            {skill}
+            </span>
+            """, unsafe_allow_html=True)
