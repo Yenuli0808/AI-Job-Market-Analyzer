@@ -21,6 +21,10 @@ def get_total_unique_skills():
     df = get_processed_data()
     return df["job_skills"].nunique()
 
+def get_all_roles(top_n=20):
+    df = get_processed_data()
+    return df["job_title"].value_counts().head(top_n).index.tolist()
+
 # Main test
 if __name__ == "__main__":
 

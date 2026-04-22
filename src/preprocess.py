@@ -51,11 +51,29 @@ def process_skills(df):
 
     return df
 
+def categorize_skill(skill):
+    programming = ["python", "java", "c++", "r"]
+    ml_ai = ["machine learning", "deep learning", "ai"]
+    tools = ["sql", "aws", "tableau", "power bi"]
+    soft = ["communication", "leadership"]
+
+    if skill in programming:
+        return "Programming"
+    elif skill in ml_ai:
+        return "AI/ML"
+    elif skill in tools:
+        return "Tools"
+    elif skill in soft:
+        return "Soft Skills"
+    else:
+        return "Other"
+
 # Full pipeline
 def get_processed_data():
 
     df = load_data()
     df = clean_data(df)
     df = process_skills(df)
+    df["category"] = df["job_skills"].apply(categorize_skill)
 
     return df
