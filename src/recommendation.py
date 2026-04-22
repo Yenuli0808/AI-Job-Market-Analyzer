@@ -1,4 +1,5 @@
 from skill_analysis import get_top_skills, get_skills_by_role
+from difflib import get_close_matches
 
 # Global Recommendation
 def recommend_top_skills(n=10):
@@ -9,6 +10,10 @@ def recommend_top_skills(n=10):
 def recommend_skills_for_role(role, n=10):
     role_skills = get_skills_by_role(role, n)
     return [skill for skill, count in role_skills]
+
+def match_role(user_input, roles):
+    matches = get_close_matches(user_input, roles, n=1, cutoff=0.3)
+    return matches[0] if matches else user_input
 
 # Smart recommendation
 def recommend_combined(role, n=10):

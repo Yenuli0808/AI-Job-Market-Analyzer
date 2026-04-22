@@ -5,9 +5,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 import streamlit as st
 import plotly.express as px
 
-from recommendation import recommend_top_skills, recommend_skills_for_role
+from recommendation import recommend_top_skills, recommend_skills_for_role, match_role
 from skill_analysis import get_top_skills, get_all_roles
 from preprocess import get_processed_data
+from skill_cluster import cluster_skills
 
 # ------------------ CONFIG ------------------
 st.set_page_config(
@@ -50,7 +51,11 @@ Analyze trends, discover in-demand skills, and close your career gap
 st.sidebar.header("⚙️ Select Options")
 
 roles = get_all_roles()
-role = st.sidebar.selectbox("Choose a Role", roles)
+user_input_role = st.sidebar.text_input("Search Role (e.g. Data Scientist)")
+if user_input_role:
+    role = match_role(user_input_role.lower(), roles)
+else:
+    role = "data scientist"
 
 num_skills = st.sidebar.slider("Number of skills", 5, 20, 10)
 
@@ -139,3 +144,12 @@ For the role **{role.title()}**, the market strongly emphasizes:
 
 Focus on mastering these to significantly improve your career opportunities.
 """)
+
+# ------------------ SKILL CLUSTERS ------------------
+st.markdown("## 🧠 AI Skill Intelligence Clusters")
+
+clusters = cluster_skills(5)
+
+for cluster_id, skills_list in clusters.items():
+    with st.expander(f"Cluster {cluster_id}"):
+        st.write(", ".join(skills_list[:15]))
