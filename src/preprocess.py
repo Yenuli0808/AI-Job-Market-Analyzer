@@ -1,9 +1,12 @@
 import pandas as pd
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Load data
 def load_data():
-    jobs = pd.read_csv("../DataSet/DataScience_Job_Postings_&_Skills/job_postings.csv")
-    skills = pd.read_csv("../DataSet/DataScience_Job_Postings_&_Skills/job_skills.csv")
+    jobs = pd.read_csv(os.path.join(BASE_DIR, "DataSet/DataScience_Job_Postings_&_Skills/job_postings.csv"))
+    skills = pd.read_csv(os.path.join(BASE_DIR, "DataSet/DataScience_Job_Postings_&_Skills/job_skills.csv"))
 
     df = jobs.merge(skills, on="job_link")
     return df
