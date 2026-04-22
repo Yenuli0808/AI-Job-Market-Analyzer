@@ -19,6 +19,22 @@ st.set_page_config(
 # ------------------ STYLE ------------------
 st.markdown("""
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+h1, h2, h3 {
+    letter-spacing: -0.5px;
+}
+.metric-label {
+    font-size: 14px;
+    color: #aaa;
+}
+.metric-value {
+    font-size: 28px;
+    font-weight: bold;
+}
 .block-container {
     padding-top: 2rem;
 }
@@ -51,12 +67,13 @@ Analyze trends, discover in-demand skills, and close your career gap
 st.sidebar.header("⚙️ Select Options")
 
 roles = get_all_roles()
-user_input_role = st.sidebar.text_input("Search Role (e.g. Data Scientist)")
-if user_input_role:
-    role = match_role(user_input_role.lower(), roles)
+search_input = st.sidebar.text_input("🔍 Search Role")
+filtered_roles = [r for r in roles if search_input.lower() in r.lower()]
+
+if filtered_roles:
+    role = st.sidebar.selectbox("Select Matching Role", filtered_roles)
 else:
     role = "data scientist"
-
 num_skills = st.sidebar.slider("Number of skills", 5, 20, 10)
 
 # ------------------ DATA ------------------
@@ -70,9 +87,27 @@ role_skills = recommend_skills_for_role(role, num_skills)
 st.markdown("## 📊 Market Overview")
 
 col1, col2, col3 = st.columns(3)
-col1.metric("🔥 Top Skill", skills[0])
-col2.metric("📈 Skills Analyzed", len(skills))
-col3.metric("💼 Role", role.title())
+
+col1.markdown(f"""
+<div class="card">
+<div class="metric-label">🔥 Top Skill</div>
+<div class="metric-value">{skills[0]}</div>
+</div>
+""", unsafe_allow_html=True)
+
+col2.markdown(f"""
+<div class="card">
+<div class="metric-label">📈 Skills Analyzed</div>
+<div class="metric-value">{len(skills)}</div>
+</div>
+""", unsafe_allow_html=True)
+
+col3.markdown(f"""
+<div class="card">
+<div class="metric-label">💼 Role</div>
+<div class="metric-value">{role.title()}</div>
+</div>
+""", unsafe_allow_html=True)
 
 # ------------------ CHARTS (SIDE BY SIDE) ------------------
 col_left, col_right = st.columns(2)
@@ -146,10 +181,18 @@ Focus on mastering these to significantly improve your career opportunities.
 """)
 
 # ------------------ SKILL CLUSTERS ------------------
+cluster_labels = {
+    0: "💻 Programming & Development",
+    1: "📊 Management & Governance",
+    2: "⚙️ Data Engineering & Pipelines",
+    3: "📈 Reporting & Analytics",
+    4: "🤖 Machine Learning & AI"
+}
 st.markdown("## 🧠 AI Skill Intelligence Clusters")
-
 clusters = cluster_skills(5)
 
 for cluster_id, skills_list in clusters.items():
-    with st.expander(f"Cluster {cluster_id}"):
-        st.write(", ".join(skills_list[:15]))
+    label = cluster_labels.get(cluster_id, f"Cluster {cluster_id}")
+
+    with st.expander(label):
+        st.write(", ".join(skills_list[:12]))
