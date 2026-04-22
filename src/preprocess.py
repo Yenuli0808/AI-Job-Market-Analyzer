@@ -34,11 +34,14 @@ def process_skills(df):
 
     # Normalize skills
     skill_map = {
-        "ml": "machine learning",
-        "ai": "artificial intelligence",
-        "python programming": "python",
-        "sql databases": "sql"
-    }
+    "ml": "machine learning",
+    "ai": "artificial intelligence",
+    "python programming": "python",
+    "sql databases": "sql",
+    "communication skills": "communication",
+    "data analytics": "data analysis",
+    "visualization": "data visualization"
+}
 
     df["job_skills"] = df["job_skills"].apply(lambda x: skill_map.get(x, x))
 
