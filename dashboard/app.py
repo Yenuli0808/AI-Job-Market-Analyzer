@@ -4,11 +4,16 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 's
 
 import streamlit as st
 import plotly.express as px
+import pdfplumber
 
 from recommendation import recommend_top_skills, recommend_skills_for_role, match_role
 from skill_analysis import get_top_skills, get_all_roles
 from preprocess import get_processed_data
 from skill_cluster import cluster_skills
+from resume_parser import extract_skills_from_text
+from nlp_engine import get_similarity_scores
+from bert_engine import bert_similarity
+from career_path import get_career_path
 
 # ------------------ CONFIG ------------------
 st.set_page_config(
@@ -69,9 +74,21 @@ st.sidebar.header("⚙️ Select Options")
 roles = get_all_roles()
 search_input = st.sidebar.text_input("🔍 Search Role")
 filtered_roles = [r for r in roles if search_input.lower() in r.lower()]
+use_ai = st.sidebar.toggle("Use Advanced AI (BERT)", value=False)
 
 if filtered_roles:
     role = st.sidebar.selectbox("Select Matching Role", filtered_roles)
+# -------- NLP MATCHING --------
+if search_input:
+    if use_ai:
+        scores = bert_similarity(search_input, roles)
+        st.sidebar.markdown("🧠 Using AI Model")
+    else:
+        scores = get_similarity_scores(search_input, roles)
+        st.sidebar.markdown("⚡ Fast Mode")
+
+    best_match = roles[scores.argmax()]
+    st.sidebar.markdown(f"🎯 Best Match: **{best_match}**")
 else:
     role = "data scientist"
 num_skills = st.sidebar.slider("Number of skills", 5, 20, 10)
@@ -168,6 +185,35 @@ if user_skills:
     else:
         st.success("🔥 You already have the top skills!")
 
+# -----------Extract Skills from resume -----------
+st.markdown("## 📄 Resume Skill Extraction")
+uploaded_file = st.file_uploader("Upload your resume (TXT only for now)")
+
+if uploaded_file:
+    if uploaded_file.type == "application/pdf":
+        with pdfplumber.open(uploaded_file) as pdf:
+            content = ""
+            for page in pdf.pages:
+                content += page.extract_text() or ""
+    else:
+        content = uploaded_file.read().decode("utf-8")
+    all_skills = [skill for skill, _ in get_top_skills(100)]
+    extracted = extract_skills_from_text(content, all_skills)
+
+    st.success("✅ Extracted Skills:")
+    for skill in extracted:
+        st.markdown(f"""
+        <span style="
+        background:#065f46;
+        color:white;
+        padding:5px 10px;
+        margin:4px;
+        border-radius:15px;
+        display:inline-block;">
+        {skill}
+        </span>
+        """, unsafe_allow_html=True)
+
 # ------------------ AI INSIGHT ------------------
 st.markdown("## 🤖 AI Insight")
 
@@ -179,6 +225,15 @@ For the role **{role.title()}**, the market strongly emphasizes:
 
 Focus on mastering these to significantly improve your career opportunities.
 """)
+# ------------------ CAREER PATH ------------------
+st.markdown("## 🚀 Career Path")
+next_roles = get_career_path(role)
+
+if next_roles:
+    for r in next_roles:
+        st.markdown(f"➡️ {r}")
+else:
+    st.info("No predefined career path for this role yet.")
 
 # ------------------ SKILL CLUSTERS ------------------
 cluster_labels = {
