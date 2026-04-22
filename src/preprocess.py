@@ -2,8 +2,8 @@ import pandas as pd
 
 # Load data
 def load_data():
-    jobs = pd.read_csv("DataSet/DataScience_Job_Postings_&_Skills-DataSet/job_postings.csv")
-    skills = pd.read_csv("DataSet/DataScience_Job_Postings_&_Skills-DataSet/job_skills.csv")
+    jobs = pd.read_csv("../DataSet/DataScience_Job_Postings_&_Skills/job_postings.csv")
+    skills = pd.read_csv("../DataSet/DataScience_Job_Postings_&_Skills/job_skills.csv")
 
     df = jobs.merge(skills, on="job_link")
     return df
