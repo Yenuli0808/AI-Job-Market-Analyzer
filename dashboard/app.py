@@ -216,21 +216,22 @@ if uploaded_file:
 st.markdown("## 🎯 Resume vs Job Match")
 job_desc = st.text_area("Paste Job Description")
 
-if content and job_desc:
-    try:
-        content = uploaded_file.read().decode("utf-8", errors="ignore")
-        score = calculate_match(content, job_desc)
-        st.metric("📊 Match Score", f"{score}%")
+if job_desc:
+    if content:  # 'content' was already read above during Resume Extraction
+        try:
+            score = calculate_match(content, job_desc)  # use existing content variable
+            st.metric("📊 Match Score", f"{score}%")
 
-        if score > 70:
-            st.success("🔥 Strong Match!")
-        elif score > 40:
-            st.warning("⚡ متوسط match — improve skills")
-        else:
-            st.error("❌ Low match — upskill needed")
-
-    except:
-        st.error("Error processing files")
+            if score > 70:
+                st.success("🔥 Strong Match!")
+            elif score > 40:
+                st.warning("⚡ Moderate match — consider upskilling in the gaps")
+            else:
+                st.error("❌ Low match — focus on the skill gap above")
+        except Exception as e:
+            st.error(f"Error processing match: {e}")
+    else:
+        st.info("⬆️ Upload your resume above first to get a match score.")
 
 # ------------------ AI INSIGHT ------------------
 st.markdown("## 🤖 AI Insight")
@@ -255,7 +256,7 @@ else:
 
 # ------------------ SKILL CLUSTERS ------------------
 st.markdown("## 🧠 AI Skill Intelligence Clusters")
-clusters = cluster_skills(5)
+clusters = cluster_skills() 
 
 for label, skills_list in clusters.items():
     with st.expander(label):
@@ -266,19 +267,24 @@ st.markdown("## 🤖 Career Assistant")
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
-user_q = st.text_input("Ask anything about your career")
+user_q = st.chat_input("Ask anything about your career...")
 
 if user_q:
-    response = chatbot_response(user_q, role, st.session_state.chat_history)
-
+    # Add user message
     st.session_state.chat_history.append(("user", user_q))
+    
+    # Get AI response with full history for context
+    response = chatbot_response(user_q, role, st.session_state.chat_history)
     st.session_state.chat_history.append(("bot", response))
 
-for sender, msg in st.session_state.chat_history[-6:]:
+# Display last 10 messages
+for sender, msg in st.session_state.chat_history[-10:]:
     if sender == "user":
-        st.markdown(f"**🧑 You:** {msg}")
+        with st.chat_message("user"):
+            st.write(msg)
     else:
-        st.markdown(f"**🤖 AI:** {msg}")
+        with st.chat_message("assistant"):
+            st.write(msg)
 
 # ------------------ SAVE PROFILE ------------------
 st.markdown("## 👤 Save Your Profile")

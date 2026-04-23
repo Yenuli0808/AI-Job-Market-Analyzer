@@ -1,34 +1,65 @@
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.cluster import KMeans
 from preprocess import get_processed_data
 
-CLUSTER_LABELS = [
-    "💻 Programming & Development",
-    "📊 Management & Governance",
-    "⚙️ Data Engineering & Pipelines",
-    "📈 Reporting & Analytics",
-    "🤖 Machine Learning & AI",
+# Keyword rules for each cluster — order matters (first match wins)
+CLUSTER_RULES = [
+    ("🤖 Machine Learning & AI", [
+        "machine learning", "deep learning", "nlp", "natural language",
+        "computer vision", "tensorflow", "pytorch", "keras", "scikit",
+        "artificial intelligence", "neural", "llm", "bert", "gpt",
+        "xgboost", "reinforcement", "classification", "regression",
+        "clustering", "hugging", "transformer", "model", "prediction",
+    ]),
+    ("💻 Programming & Development", [
+        "python", "java", "scala", "r", "c++", "javascript", "typescript",
+        "sql", "bash", "shell", "go", "rust", "ruby", "php", "matlab",
+        "programming", "software", "development", "coding", "algorithm",
+        "data structures", "oop", "api", "microservices", "rest",
+    ]),
+    ("⚙️ Data Engineering & Pipelines", [
+        "kafka", "spark", "hadoop", "airflow", "etl", "pipeline",
+        "data engineering", "data lake", "data warehouse", "flink",
+        "hive", "presto", "nifi", "dbt", "ingestion", "streaming",
+        "batch", "databricks", "glue", "data integration",
+    ]),
+    ("☁️ Cloud & Databases", [
+        "aws", "azure", "gcp", "cloud", "s3", "ec2", "redshift",
+        "bigquery", "snowflake", "mysql", "postgresql", "mongodb",
+        "cassandra", "redis", "dynamodb", "oracle", "database",
+        "nosql", "storage", "kubernetes", "docker", "terraform",
+    ]),
+    ("📊 Analytics & Reporting", [
+        "tableau", "power bi", "looker", "excel", "data analysis",
+        "data visualization", "analytics", "reporting", "dashboard",
+        "statistics", "business intelligence", "insight", "kpi",
+        "metrics", "qlik", "data science", "pandas", "numpy",
+    ]),
+    ("📋 Management & Soft Skills", [
+        "communication", "leadership", "project management", "agile",
+        "scrum", "teamwork", "collaboration", "problem solving",
+        "stakeholder", "mentoring", "presentation", "analytical",
+        "time management", "adaptability", "critical thinking",
+    ]),
 ]
 
-def cluster_skills(n_clusters: int = 5) -> dict:
+def cluster_skills(n_clusters: int = 6) -> dict:
+    """Group skills by semantic category using keyword rules."""
     df = get_processed_data()
-    skills = df["job_skills"].unique()
+    skills = df["job_skills"].dropna().unique().tolist()
 
-    vectorizer = TfidfVectorizer()
-    X = vectorizer.fit_transform(skills)
+    clusters: dict[str, list] = {label: [] for label, _ in CLUSTER_RULES}
+    clusters["🔧 Other Technical"] = []
 
-    model = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-    model.fit(X)
+    for skill in skills:
+        skill_lower = skill.lower().strip()
+        assigned = False
+        for label, keywords in CLUSTER_RULES:
+            if any(kw in skill_lower for kw in keywords):
+                clusters[label].append(skill)
+                assigned = True
+                break
+        if not assigned:
+            clusters["🔧 Other Technical"].append(skill)
 
-    raw_clusters: dict[int, list] = {}
-    for skill, label in zip(skills, model.labels_):
-        raw_clusters.setdefault(int(label), []).append(skill)
-
-    # Sort clusters by size descending → assign fixed labels by size rank
-    sorted_ids = sorted(raw_clusters, key=lambda k: len(raw_clusters[k]), reverse=True)
-    named = {}
-    for rank, cluster_id in enumerate(sorted_ids):
-        label = CLUSTER_LABELS[rank] if rank < len(CLUSTER_LABELS) else f"Cluster {rank}"
-        named[label] = raw_clusters[cluster_id]
-
-    return named
+    # Remove empty clusters
+    clusters = {k: v for k, v in clusters.items() if v}
+    return clusters
