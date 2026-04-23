@@ -15,7 +15,7 @@ from nlp_engine import get_similarity_scores
 from bert_engine import bert_similarity
 from career_path import get_career_path
 from matcher import calculate_match
-from chatbot import career_chatbot
+from chatbot import chatbot_response
 from user_profile import save_profile, load_profile
 from report_generator import generate_report
 
@@ -66,7 +66,7 @@ def render_skill_chips(skills):
     cols = st.columns(4)  
     for i, skill in enumerate(skills):
         cols[i % 4].markdown(
-            f"<div style='padding:8px 12px; margin:5px; background:#0e1a2b; border-radius:10px; text-align:center;'>• {skill}</div>",
+            f"<div style='padding:8px 12px; margin:5px; background:#0e1a2b; border-radius:10px; text-align:center;'> {skill}</div>",
             unsafe_allow_html=True
         )
 
@@ -254,19 +254,10 @@ else:
     st.info("No predefined career path for this role yet.")
 
 # ------------------ SKILL CLUSTERS ------------------
-cluster_labels = {
-    0: "💻 Programming & Development",
-    1: "📊 Management & Governance",
-    2: "⚙️ Data Engineering & Pipelines",
-    3: "📈 Reporting & Analytics",
-    4: "🤖 Machine Learning & AI"
-}
 st.markdown("## 🧠 AI Skill Intelligence Clusters")
 clusters = cluster_skills(5)
 
-for cluster_id, skills_list in clusters.items():
-    label = cluster_labels.get(cluster_id, f"Cluster {cluster_id}")
-
+for label, skills_list in clusters.items():
     with st.expander(label):
         render_skill_chips(skills_list[:12])
 
@@ -278,7 +269,7 @@ if "chat_history" not in st.session_state:
 user_q = st.text_input("Ask anything about your career")
 
 if user_q:
-    response = career_chatbot(user_q, role, st.session_state.chat_history)
+    response = chatbot_response(user_q, role, st.session_state.chat_history)
 
     st.session_state.chat_history.append(("user", user_q))
     st.session_state.chat_history.append(("bot", response))
@@ -294,20 +285,14 @@ st.markdown("## 👤 Save Your Profile")
 name = st.text_input("Your Name")
 
 if st.button("Save Profile"):
-    if uploaded_file:
-        save_profile(name, extracted if 'extracted' in locals() else [])
-    else:
-        save_profile(name, [])
-
+    save_profile(name, extracted if 'extracted' in locals() else [], role)
     st.success("✅ Profile Saved")
-
-from user_profile import load_profile
 
 if name:
     profile = load_profile(name)
-    if profile:
+    if profile and profile.get("skills"):
         st.markdown("### 📂 Saved Profile")
-        render_skill_chips(profile)
+        render_skill_chips(profile["skills"])
 
 st.markdown("## 📥 Download Career Report")
 

@@ -7,64 +7,44 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 def load_data():
     jobs = pd.read_csv(os.path.join(BASE_DIR, "DataSet/DataScience_Job_Postings_&_Skills/job_postings.csv"))
     skills = pd.read_csv(os.path.join(BASE_DIR, "DataSet/DataScience_Job_Postings_&_Skills/job_skills.csv"))
+    return jobs.merge(skills, on="job_link")
 
-    df = jobs.merge(skills, on="job_link")
-    return df
 
 # Clean data
 def clean_data(df):
-    df = df.drop_duplicates()
-    df = df.dropna(subset=["job_skills"])
-
+    df = df.drop_duplicates().dropna(subset=["job_skills"])
     df["job_title"] = df["job_title"].str.lower()
     df["job_skills"] = df["job_skills"].str.lower()
-
     return df
 
 # Process Skills
 def process_skills(df):
-    # Convert string → list
-    df["job_skills"] = df["job_skills"].apply(lambda x: x.split(","))
-
-    # Remove spaces
-    df["job_skills"] = df["job_skills"].apply(lambda skills: [s.strip() for s in skills])
-
-    # Explode (VERY IMPORTANT)
-    df = df.explode("job_skills")
-
-    # Normalize skills
     skill_map = {
-    "ml": "machine learning",
-    "ai": "artificial intelligence",
-    "python programming": "python",
-    "sql databases": "sql",
-    "communication skills": "communication",
-    "data analytics": "data analysis",
-    "visualization": "data visualization"
-}
-
+        "ml": "machine learning", "ai": "artificial intelligence",
+        "python programming": "python", "sql databases": "sql",
+        "communication skills": "communication", "data analytics": "data analysis",
+        "visualization": "data visualization",
+    }
+    df["job_skills"] = df["job_skills"].apply(lambda x: x.split(","))
+    df["job_skills"] = df["job_skills"].apply(lambda s: [i.strip() for i in s])
+    df = df.explode("job_skills")
     df["job_skills"] = df["job_skills"].apply(lambda x: skill_map.get(x, x))
-
-    # Remove empty values
-    df = df[df["job_skills"] != ""]
-    df = df.dropna(subset=["job_skills"])
-
+    df = df[df["job_skills"].str.strip() != ""].dropna(subset=["job_skills"])
     return df
 
 def categorize_skill(skill):
-    programming = ["python", "java", "c++", "r"]
-    ml_ai = ["machine learning", "deep learning", "ai"]
-    tools = ["sql", "aws", "tableau", "power bi"]
-    soft = ["communication", "leadership"]
+    skill = skill.lower()
 
-    if skill in programming:
+    if skill in ["python", "java", "c++", "r"]:
         return "Programming"
-    elif skill in ml_ai:
-        return "AI/ML"
-    elif skill in tools:
+    elif skill in ["sql", "excel", "power bi", "tableau"]:
         return "Tools"
-    elif skill in soft:
+    elif skill in ["communication", "leadership", "teamwork"]:
         return "Soft Skills"
+    elif skill in ["machine learning", "deep learning", "nlp"]:
+        return "AI/ML"
+    elif skill in ["data engineering", "etl", "data warehouse"]:
+        return "Data Engineering"
     else:
         return "Other"
 
